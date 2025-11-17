@@ -1,0 +1,28 @@
+:root{
+  --muted:#475569;
+  --accent:#5b8cff;
+  --glass: rgba(255,255,255,0.88);
+  --max-width:1200px;
+}
+*{box-sizing:border-box}
+html,body{height:100%; margin:0; font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial; -webkit-font-smoothing:antialiased}
+
+
+h2{
+    font-size:50px; text-align:center; margin-bottom:18px; font-weight:1000px;
+    margin-top: 150px;
+}
+
+.features-grid{ display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin-top:100px }
+.feature-card{ width:320px; min-height:260px; border-radius:16px; padding:20px; background:#fff; box-shadow:0 40px 120px rgba(8,18,38,0.06); transform-style:preserve-3d; transition: transform 1.5s cubic-bezier(.2,.9,.2,1), box-shadow 1.5s, filter 1.5s; display:flex; flex-direction:column; gap:12px }
+.feature-card:hover{ transform:translateY(-18px) rotateX(6deg) rotateY(-6deg); box-shadow:0 68px 160px rgba(8,18,38,0.12) }
+.fw-icon{ width:56px; height:56px; border-radius:12px; display:grid; place-items:center; background:rgba(0,0,0,0.04); transition: transform 1.5s, background 1.5s, filter 1.5s }
+.feature-card:hover .fw-icon{ transform:translateZ(30px) scale(1.06); background:rgba(0,0,0,0.06) }
+.feature-title{ margin:0; font-size:18px; font-weight:600 }
+.feature-desc{ color:var(--muted); line-height:1.45 }
+
+
+@media (max-width:1000px){
+  .feature-card{ width:100%; min-height:180px }
+}
+

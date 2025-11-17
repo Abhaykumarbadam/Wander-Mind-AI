@@ -1,0 +1,53 @@
+[
+    {
+        "id": "osaka_castle",
+        "poi_type": "monument",
+        "name": "Osaka Castle",
+        "city": "Osaka",
+        "state": "",
+        "country": "Japan",
+        "description": "Historic castle with museum, surrounded by moats and beautiful park, symbol of Osaka.",
+        "tags": ["castle", "historic", "museum", "park", "landmark"],
+        "duration_hours": 2.5,
+        "best_time": ["morning", "afternoon"],
+        "category": "historical",
+        "lat": 34.6873,
+        "lon": 135.5262,
+        "price_band": 2,
+        "source": ["wikidata:Q378274", "wikipedia:Osaka_Castle"]
+    },
+    {
+        "id": "osaka_dotonbori",
+        "poi_type": "shopping",
+        "name": "Dotonbori Street",
+        "city": "Osaka",
+        "state": "",
+        "country": "Japan",
+        "description": "Vibrant entertainment district famous for neon lights, street food, and iconic Glico Running Man sign.",
+        "tags": ["entertainment", "nightlife", "street_food", "neon", "iconic"],
+        "duration_hours": 2.5,
+        "best_time": ["evening", "night"],
+        "category": "food",
+        "lat": 34.6686,
+        "lon": 135.5020,
+        "price_band": 2,
+        "source": ["wikidata:Q931363", "wikipedia:Dōtonbori"]
+    },
+    {
+        "id": "osaka_kuromon_market",
+        "poi_type": "shopping",
+        "name": "Kuromon Ichiba Market",
+        "city": "Osaka",
+        "state": "",
+        "country": "Japan",
+        "description": "Traditional food market known as 'Osaka's Kitchen', offering fresh seafood and local delicacies.",
+        "tags": ["market", "food", "seafood", "traditional", "local"],
+        "duration_hours": 1.5,
+        "best_time": ["morning", "afternoon"],
+        "category": "food",
+        "lat": 34.6662,
+        "lon": 135.5051,
+        "price_band": 2,
+        "source": ["wikidata:Q6446553", "wikipedia:Kuromon_Ichiba_Market"]
+    }
+]

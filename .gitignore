@@ -1,0 +1,49 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+# Backup env files
+.env.backup
+
+# Firebase credentials
+firebase-init.js
+wandermindauth.json
+
+# Node modules
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Chroma
+chroma_db/
+chroma_persist/
+
+# Testing
+.pytest_cache/

@@ -1,0 +1,53 @@
+[
+    {
+        "id": "zurich_lake_zurich",
+        "poi_type": "viewpoint",
+        "name": "Lake Zurich",
+        "city": "Zurich",
+        "state": "",
+        "country": "Switzerland",
+        "description": "Scenic lake offering boat cruises, swimming, lakeside promenades, and mountain views.",
+        "tags": ["lake", "boating", "scenic", "promenade", "swimming"],
+        "duration_hours": 2.5,
+        "best_time": ["morning", "afternoon", "sunset"],
+        "category": "nature",
+        "lat": 47.3667,
+        "lon": 8.5500,
+        "price_band": 2,
+        "source": ["wikidata:Q14379", "wikipedia:Lake_Zurich"]
+    },
+    {
+        "id": "zurich_bahnhofstrasse",
+        "poi_type": "shopping",
+        "name": "Bahnhofstrasse",
+        "city": "Zurich",
+        "state": "",
+        "country": "Switzerland",
+        "description": "One of the world's most exclusive shopping streets, featuring luxury brands and Swiss watches.",
+        "tags": ["shopping", "luxury", "street", "fashion", "watches"],
+        "duration_hours": 2.0,
+        "best_time": ["morning", "afternoon"],
+        "category": "shopping",
+        "lat": 47.3769,
+        "lon": 8.5398,
+        "price_band": 5,
+        "source": ["wikidata:Q664516", "wikipedia:Bahnhofstrasse"]
+    },
+    {
+        "id": "zurich_old_town",
+        "poi_type": "other",
+        "name": "Zurich Old Town (Altstadt)",
+        "city": "Zurich",
+        "state": "",
+        "country": "Switzerland",
+        "description": "Historic district with medieval lanes, churches, boutiques, cafes, and traditional Swiss architecture.",
+        "tags": ["historic", "medieval", "architecture", "old_town", "cultural"],
+        "duration_hours": 2.5,
+        "best_time": ["morning", "afternoon"],
+        "category": "historical",
+        "lat": 47.3715,
+        "lon": 8.5429,
+        "price_band": 2,
+        "source": ["wikidata:Q70", "wikipedia:Zürich"]
+    }
+]

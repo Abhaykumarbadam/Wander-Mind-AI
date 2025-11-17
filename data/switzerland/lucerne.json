@@ -1,0 +1,53 @@
+[
+    {
+        "id": "lucerne_chapel_bridge",
+        "poi_type": "monument",
+        "name": "Chapel Bridge (Kapellbrücke)",
+        "city": "Lucerne",
+        "state": "",
+        "country": "Switzerland",
+        "description": "Iconic 14th-century wooden bridge with paintings, symbol of Lucerne and Switzerland's oldest covered bridge.",
+        "tags": ["bridge", "historic", "wooden", "iconic", "medieval"],
+        "duration_hours": 0.5,
+        "best_time": ["morning", "afternoon", "evening"],
+        "category": "historical",
+        "lat": 47.0524,
+        "lon": 8.3063,
+        "price_band": 1,
+        "source": ["wikidata:Q152987", "wikipedia:Chapel_Bridge"]
+    },
+    {
+        "id": "lucerne_mount_pilatus",
+        "poi_type": "viewpoint",
+        "name": "Mount Pilatus",
+        "city": "Lucerne",
+        "state": "",
+        "country": "Switzerland",
+        "description": "Mountain massif offering world's steepest cogwheel railway and panoramic Alpine views.",
+        "tags": ["mountain", "cable_car", "panoramic", "hiking", "alpine"],
+        "duration_hours": 5.0,
+        "best_time": ["morning", "afternoon"],
+        "category": "nature",
+        "lat": 46.9789,
+        "lon": 8.2525,
+        "price_band": 4,
+        "source": ["wikidata:Q14437", "wikipedia:Pilatus_(mountain)"]
+    },
+    {
+        "id": "lucerne_lake_lucerne",
+        "poi_type": "viewpoint",
+        "name": "Lake Lucerne",
+        "city": "Lucerne",
+        "state": "",
+        "country": "Switzerland",
+        "description": "Stunning lake surrounded by mountains, offering boat cruises and scenic waterfront views.",
+        "tags": ["lake", "boating", "scenic", "mountain", "cruise"],
+        "duration_hours": 3.0,
+        "best_time": ["morning", "afternoon", "sunset"],
+        "category": "nature",
+        "lat": 47.0534,
+        "lon": 8.3139,
+        "price_band": 3,
+        "source": ["wikidata:Q14379", "wikipedia:Lake_Lucerne"]
+    }
+]

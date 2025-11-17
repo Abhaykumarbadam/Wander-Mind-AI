@@ -1,0 +1,53 @@
+[
+    {
+        "id": "interlaken_jungfraujoch",
+        "poi_type": "viewpoint",
+        "name": "Jungfraujoch (Top of Europe)",
+        "city": "Interlaken",
+        "state": "",
+        "country": "Switzerland",
+        "description": "Europe's highest railway station at 3,454m, offering glacier views and alpine experiences.",
+        "tags": ["mountain", "railway", "glacier", "snow", "panoramic"],
+        "duration_hours": 7.0,
+        "best_time": ["morning", "afternoon"],
+        "category": "nature",
+        "lat": 46.5472,
+        "lon": 7.9806,
+        "price_band": 5,
+        "source": ["wikidata:Q13403", "wikipedia:Jungfraujoch"]
+    },
+    {
+        "id": "interlaken_harder_kulm",
+        "poi_type": "viewpoint",
+        "name": "Harder Kulm",
+        "city": "Interlaken",
+        "state": "",
+        "country": "Switzerland",
+        "description": "Viewpoint at 1,322m offering panoramic views of Interlaken, lakes, and surrounding peaks.",
+        "tags": ["viewpoint", "mountain", "panoramic", "funicular", "scenic"],
+        "duration_hours": 2.5,
+        "best_time": ["morning", "afternoon", "sunset"],
+        "category": "viewpoint",
+        "lat": 46.6956,
+        "lon": 7.8853,
+        "price_band": 3,
+        "source": ["wikidata:Q673554", "wikipedia:Harder_Kulm"]
+    },
+    {
+        "id": "interlaken_lake_thun",
+        "poi_type": "viewpoint",
+        "name": "Lake Thun",
+        "city": "Interlaken",
+        "state": "",
+        "country": "Switzerland",
+        "description": "Beautiful alpine lake with boat cruises, surrounded by mountains and medieval castles.",
+        "tags": ["lake", "boating", "alpine", "scenic", "castle"],
+        "duration_hours": 3.0,
+        "best_time": ["morning", "afternoon", "sunset"],
+        "category": "nature",
+        "lat": 46.7286,
+        "lon": 7.6383,
+        "price_band": 3,
+        "source": ["wikidata:Q14376", "wikipedia:Lake_Thun"]
+    }
+]

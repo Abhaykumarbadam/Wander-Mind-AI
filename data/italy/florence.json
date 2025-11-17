@@ -1,0 +1,53 @@
+[
+    {
+        "id": "florence_uffizi_gallery",
+        "poi_type": "museum",
+        "name": "Uffizi Gallery",
+        "city": "Florence",
+        "state": "",
+        "country": "Italy",
+        "description": "World-renowned art museum housing masterpieces by Botticelli, da Vinci, and Michelangelo.",
+        "tags": ["museum", "art", "renaissance", "masterpieces", "culture"],
+        "duration_hours": 3.5,
+        "best_time": ["morning", "afternoon"],
+        "category": "cultural",
+        "lat": 43.7687,
+        "lon": 11.2559,
+        "price_band": 3,
+        "source": ["wikidata:Q51252", "wikipedia:Uffizi"]
+    },
+    {
+        "id": "florence_ponte_vecchio",
+        "poi_type": "monument",
+        "name": "Ponte Vecchio",
+        "city": "Florence",
+        "state": "",
+        "country": "Italy",
+        "description": "Medieval stone bridge lined with jewelry shops, iconic symbol of Florence.",
+        "tags": ["bridge", "medieval", "jewelry", "iconic", "romantic"],
+        "duration_hours": 0.5,
+        "best_time": ["morning", "afternoon", "sunset"],
+        "category": "historical",
+        "lat": 43.7679,
+        "lon": 11.2529,
+        "price_band": 1,
+        "source": ["wikidata:Q172912", "wikipedia:Ponte_Vecchio"]
+    },
+    {
+        "id": "florence_duomo",
+        "poi_type": "monument",
+        "name": "Florence Cathedral (Duomo)",
+        "city": "Florence",
+        "state": "",
+        "country": "Italy",
+        "description": "Gothic cathedral with Brunelleschi's iconic dome, offering panoramic city views from the top.",
+        "tags": ["cathedral", "dome", "gothic", "architecture", "viewpoint"],
+        "duration_hours": 2.5,
+        "best_time": ["morning", "afternoon"],
+        "category": "historical",
+        "lat": 43.7731,
+        "lon": 11.2560,
+        "price_band": 2,
+        "source": ["wikidata:Q2943", "wikipedia:Florence_Cathedral"]
+    }
+]

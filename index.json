@@ -1,0 +1,319 @@
+{
+  "metadata": {
+    "title": "Travel Knowledge Base",
+    "version": "1.0.0",
+    "last_updated": "2025-11-06",
+    "total_countries": 13,
+    "total_cities": 50,
+    "total_pois": 200,
+    "description": "Structured JSON database of top tourist POIs worldwide with focus on India and famous global destinations"
+  },
+  "countries": {
+    "india": {
+      "name": "India",
+      "states": [
+        {
+          "name": "Kerala",
+          "file": "data/india/kerala.json",
+          "cities": ["Munnar", "Alappuzha", "Kochi", "Varkala", "Thrissur"],
+          "poi_count": 5
+        },
+        {
+          "name": "Telangana",
+          "file": "data/india/telangana.json",
+          "cities": ["Hyderabad"],
+          "poi_count": 5
+        },
+        {
+          "name": "Rajasthan",
+          "file": "data/india/rajasthan.json",
+          "cities": ["Jaipur", "Udaipur", "Jaisalmer"],
+          "poi_count": 5
+        },
+        {
+          "name": "Delhi",
+          "file": "data/india/delhi.json",
+          "cities": ["New Delhi"],
+          "poi_count": 5
+        },
+        {
+          "name": "Goa",
+          "file": "data/india/goa.json",
+          "cities": ["Baga", "Old Goa", "Anjuna", "Canacona"],
+          "poi_count": 5
+        },
+        {
+          "name": "Maharashtra",
+          "file": "data/india/maharashtra.json",
+          "cities": ["Mumbai"],
+          "poi_count": 5
+        },
+        {
+          "name": "Himachal Pradesh",
+          "file": "data/india/himachal_pradesh.json",
+          "cities": ["Manali", "Shimla", "Dharamshala", "Kasol"],
+          "poi_count": 5
+        },
+        {
+          "name": "Tamil Nadu",
+          "file": "data/india/tamil_nadu.json",
+          "cities": ["Madurai", "Chennai", "Ooty", "Mahabalipuram"],
+          "poi_count": 5
+        },
+        {
+          "name": "Uttar Pradesh",
+          "file": "data/india/uttar_pradesh.json",
+          "cities": ["Agra", "Varanasi", "Fatehpur Sikri", "Lucknow"],
+          "poi_count": 5
+        },
+        {
+          "name": "West Bengal",
+          "file": "data/india/west_bengal.json",
+          "cities": ["Kolkata", "Darjeeling", "Gosaba"],
+          "poi_count": 5
+        }
+      ]
+    },
+    "france": {
+      "name": "France",
+      "regions": [
+        {
+          "name": "Paris",
+          "file": "data/france/paris.json",
+          "cities": ["Paris"],
+          "poi_count": 5
+        },
+        {
+          "name": "Nice",
+          "file": "data/france/nice.json",
+          "cities": ["Nice"],
+          "poi_count": 3
+        }
+      ]
+    },
+    "japan": {
+      "name": "Japan",
+      "regions": [
+        {
+          "name": "Tokyo",
+          "file": "data/japan/tokyo.json",
+          "cities": ["Tokyo"],
+          "poi_count": 5
+        },
+        {
+          "name": "Kyoto",
+          "file": "data/japan/kyoto.json",
+          "cities": ["Kyoto"],
+          "poi_count": 4
+        },
+        {
+          "name": "Osaka",
+          "file": "data/japan/osaka.json",
+          "cities": ["Osaka"],
+          "poi_count": 3
+        }
+      ]
+    },
+    "united_kingdom": {
+      "name": "United Kingdom",
+      "regions": [
+        {
+          "name": "London",
+          "file": "data/united_kingdom/london.json",
+          "cities": ["London"],
+          "poi_count": 5
+        },
+        {
+          "name": "Edinburgh",
+          "file": "data/united_kingdom/edinburgh.json",
+          "cities": ["Edinburgh"],
+          "poi_count": 3
+        }
+      ]
+    },
+    "italy": {
+      "name": "Italy",
+      "regions": [
+        {
+          "name": "Rome",
+          "file": "data/italy/rome.json",
+          "cities": ["Rome", "Vatican City"],
+          "poi_count": 5
+        },
+        {
+          "name": "Venice",
+          "file": "data/italy/venice.json",
+          "cities": ["Venice"],
+          "poi_count": 4
+        },
+        {
+          "name": "Florence",
+          "file": "data/italy/florence.json",
+          "cities": ["Florence"],
+          "poi_count": 3
+        }
+      ]
+    },
+    "united_states": {
+      "name": "United States",
+      "regions": [
+        {
+          "name": "New York",
+          "file": "data/united_states/new_york.json",
+          "cities": ["New York City"],
+          "poi_count": 5
+        },
+        {
+          "name": "Los Angeles",
+          "file": "data/united_states/los_angeles.json",
+          "cities": ["Los Angeles"],
+          "poi_count": 4
+        },
+        {
+          "name": "San Francisco",
+          "file": "data/united_states/san_francisco.json",
+          "cities": ["San Francisco"],
+          "poi_count": 4
+        }
+      ]
+    },
+    "australia": {
+      "name": "Australia",
+      "regions": [
+        {
+          "name": "Sydney",
+          "file": "data/australia/sydney.json",
+          "cities": ["Sydney"],
+          "poi_count": 4
+        },
+        {
+          "name": "Melbourne",
+          "file": "data/australia/melbourne.json",
+          "cities": ["Melbourne"],
+          "poi_count": 3
+        }
+      ]
+    },
+    "uae": {
+      "name": "United Arab Emirates",
+      "regions": [
+        {
+          "name": "Dubai",
+          "file": "data/uae/dubai.json",
+          "cities": ["Dubai"],
+          "poi_count": 5
+        },
+        {
+          "name": "Abu Dhabi",
+          "file": "data/uae/abu_dhabi.json",
+          "cities": ["Abu Dhabi"],
+          "poi_count": 3
+        }
+      ]
+    },
+    "thailand": {
+      "name": "Thailand",
+      "regions": [
+        {
+          "name": "Bangkok",
+          "file": "data/thailand/bangkok.json",
+          "cities": ["Bangkok"],
+          "poi_count": 4
+        },
+        {
+          "name": "Phuket",
+          "file": "data/thailand/phuket.json",
+          "cities": ["Phuket"],
+          "poi_count": 3
+        }
+      ]
+    },
+    "singapore": {
+      "name": "Singapore",
+      "regions": [
+        {
+          "name": "Singapore",
+          "file": "data/singapore/singapore.json",
+          "cities": ["Singapore"],
+          "poi_count": 5
+        }
+      ]
+    },
+    "switzerland": {
+      "name": "Switzerland",
+      "regions": [
+        {
+          "name": "Zurich",
+          "file": "data/switzerland/zurich.json",
+          "cities": ["Zurich"],
+          "poi_count": 3
+        },
+        {
+          "name": "Lucerne",
+          "file": "data/switzerland/lucerne.json",
+          "cities": ["Lucerne"],
+          "poi_count": 3
+        },
+        {
+          "name": "Interlaken",
+          "file": "data/switzerland/interlaken.json",
+          "cities": ["Interlaken"],
+          "poi_count": 3
+        }
+      ]
+    },
+    "spain": {
+      "name": "Spain",
+      "regions": [
+        {
+          "name": "Barcelona",
+          "file": "data/spain/barcelona.json",
+          "cities": ["Barcelona"],
+          "poi_count": 4
+        },
+        {
+          "name": "Madrid",
+          "file": "data/spain/madrid.json",
+          "cities": ["Madrid"],
+          "poi_count": 4
+        }
+      ]
+    },
+    "greece": {
+      "name": "Greece",
+      "regions": [
+        {
+          "name": "Athens",
+          "file": "data/greece/athens.json",
+          "cities": ["Athens"],
+          "poi_count": 4
+        },
+        {
+          "name": "Santorini",
+          "file": "data/greece/santorini.json",
+          "cities": ["Oia", "Fira", "Akrotiri"],
+          "poi_count": 4
+        }
+      ]
+    }
+  },
+  "categories": [
+    "food",
+    "viewpoint",
+    "shopping",
+    "cultural",
+    "historical",
+    "nature",
+    "other"
+  ],
+  "poi_types": [
+    "cafe",
+    "restaurant",
+    "viewpoint",
+    "shopping",
+    "museum",
+    "park",
+    "monument",
+    "other"
+  ]
+}

@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Chroma Vector Database
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: wandermind-chroma
+    ports:
+      - "8001:8000"  # Container port 8000 → Host port 8001
+    environment:
+      - CHROMA_API_IMPL=rest
+      - CHROMA_HOST=0.0.0.0
+      - CHROMA_PORT=8000
+      - CHROMA_PERSISTENT_DIRECTORY=/data
+    volumes:
+      - chroma-data:/data
+    networks:
+      - wandermind-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wandermind-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - CHROMA_MODE=server
+      - CHROMA_HOST=chroma
+      - CHROMA_PORT=8000
+      - CHROMA_URL=http://chroma:8000
+      - CHROMA_API_KEY=${CHROMA_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash}
+    depends_on:
+      chroma:
+        condition: service_healthy
+    networks:
+      - wandermind-network
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data  # For data ingestion
+      - ./chroma_db:/app/chroma_db  # For local fallback
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  chroma-data:
+    driver: local
+
+networks:
+  wandermind-network:
+    driver: bridge

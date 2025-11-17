@@ -1,0 +1,53 @@
+[
+    {
+        "id": "edinburgh_castle",
+        "poi_type": "monument",
+        "name": "Edinburgh Castle",
+        "city": "Edinburgh",
+        "state": "Scotland",
+        "country": "United Kingdom",
+        "description": "Historic fortress on volcanic rock, housing Scottish Crown Jewels and offering panoramic city views.",
+        "tags": ["castle", "fortress", "historic", "viewpoint", "royal"],
+        "duration_hours": 2.5,
+        "best_time": ["morning", "afternoon"],
+        "category": "historical",
+        "lat": 55.9486,
+        "lon": -3.1999,
+        "price_band": 3,
+        "source": ["wikidata:Q133274", "wikipedia:Edinburgh_Castle"]
+    },
+    {
+        "id": "edinburgh_arthurs_seat",
+        "poi_type": "viewpoint",
+        "name": "Arthur's Seat",
+        "city": "Edinburgh",
+        "state": "Scotland",
+        "country": "United Kingdom",
+        "description": "Ancient volcano and hill offering panoramic Edinburgh views and hiking trails in the heart of the city.",
+        "tags": ["hiking", "viewpoint", "nature", "volcano", "panoramic"],
+        "duration_hours": 2.5,
+        "best_time": ["morning", "afternoon", "sunset"],
+        "category": "nature",
+        "lat": 55.9445,
+        "lon": -3.1618,
+        "price_band": 1,
+        "source": ["wikidata:Q647842", "wikipedia:Arthur%27s_Seat"]
+    },
+    {
+        "id": "edinburgh_royal_mile",
+        "poi_type": "shopping",
+        "name": "Royal Mile",
+        "city": "Edinburgh",
+        "state": "Scotland",
+        "country": "United Kingdom",
+        "description": "Historic street connecting Edinburgh Castle to Holyrood Palace, lined with shops, pubs, and attractions.",
+        "tags": ["historic", "shopping", "street", "culture", "traditional"],
+        "duration_hours": 2.0,
+        "best_time": ["morning", "afternoon", "evening"],
+        "category": "shopping",
+        "lat": 55.9502,
+        "lon": -3.1883,
+        "price_band": 2,
+        "source": ["wikidata:Q1331649", "wikipedia:Royal_Mile"]
+    }
+]

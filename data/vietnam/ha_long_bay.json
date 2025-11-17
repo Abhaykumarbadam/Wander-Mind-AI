@@ -1,0 +1,53 @@
+[
+    {
+        "id": "ha_long_bay_cruise",
+        "poi_type": "viewpoint",
+        "name": "Ha Long Bay",
+        "city": "Ha Long",
+        "state": "",
+        "country": "Vietnam",
+        "description": "UNESCO World Heritage Site featuring thousands of limestone karsts and islands in emerald waters, best explored by cruise.",
+        "tags": ["bay", "unesco", "karst", "cruise", "scenic"],
+        "duration_hours": 8.0,
+        "best_time": ["morning", "afternoon"],
+        "category": "nature",
+        "lat": 20.9101,
+        "lon": 107.1839,
+        "price_band": 3,
+        "source": ["wikidata:Q36571", "wikipedia:Ha_Long_Bay"]
+    },
+    {
+        "id": "ha_long_sung_sot_cave",
+        "poi_type": "viewpoint",
+        "name": "Sung Sot Cave (Surprise Cave)",
+        "city": "Ha Long",
+        "state": "",
+        "country": "Vietnam",
+        "description": "Largest and most spectacular cave in Ha Long Bay with stunning stalactites and stalagmites formations.",
+        "tags": ["cave", "limestone", "stalactites", "nature", "scenic"],
+        "duration_hours": 1.5,
+        "best_time": ["morning", "afternoon"],
+        "category": "nature",
+        "lat": 20.8085,
+        "lon": 107.0523,
+        "price_band": 2,
+        "source": ["wikidata:Q7640293", "wikipedia:Ha_Long_Bay"]
+    },
+    {
+        "id": "ha_long_ti_top_island",
+        "poi_type": "viewpoint",
+        "name": "Ti Top Island",
+        "city": "Ha Long",
+        "state": "",
+        "country": "Vietnam",
+        "description": "Small island with beach and viewpoint offering panoramic views of Ha Long Bay's karst formations.",
+        "tags": ["island", "beach", "viewpoint", "panoramic", "hiking"],
+        "duration_hours": 1.5,
+        "best_time": ["morning", "afternoon"],
+        "category": "nature",
+        "lat": 20.8231,
+        "lon": 107.0800,
+        "price_band": 1,
+        "source": ["wikidata:Q36571", "wikipedia:Ha_Long_Bay"]
+    }
+]

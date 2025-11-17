@@ -1,0 +1,94 @@
+:root {
+  --muted:#475569;
+  --accent:#5b8cff;
+  --glass:rgba(255,255,255,0.88);
+  --max-width:1200px;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  height:100%; margin:0;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
+  -webkit-font-smoothing: antialiased;
+  background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+}
+
+h2 {
+  font-size: 50px;
+  text-align: center;
+  margin-top: 150px;
+  margin-bottom: 18px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #0f172a;
+}
+
+.about-grid {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 100px;
+}
+
+.about-card {
+  width: 320px;
+  min-height: 260px;
+  border-radius: 16px;
+  padding: 20px;
+  background: #fff;
+  box-shadow: 0 40px 120px rgba(8,18,38,0.06);
+  transform-style: preserve-3d;
+  transition: transform 1.5s cubic-bezier(.2,.9,.2,1), box-shadow 1.5s, filter 1.5s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: fadeUp 1.2s ease both;
+}
+
+.about-card:hover {
+  transform: translateY(-18px) rotateX(6deg) rotateY(-6deg);
+  box-shadow: 0 68px 160px rgba(8,18,38,0.12);
+}
+
+.about-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.04);
+  transition: transform 1.5s, background 1.5s, filter 1.5s;
+}
+
+.about-card:hover .about-icon {
+  transform: translateZ(30px) scale(1.06);
+  background: rgba(0,0,0,0.06);
+}
+
+.about-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.about-desc {
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: 15px;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width:1000px){
+  .about-card { width: 100%; min-height: 180px; }
+}

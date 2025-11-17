@@ -1,0 +1,53 @@
+[
+    {
+        "id": "melbourne_federation_square",
+        "poi_type": "viewpoint",
+        "name": "Federation Square",
+        "city": "Melbourne",
+        "state": "Victoria",
+        "country": "Australia",
+        "description": "Cultural precinct and meeting place with modern architecture, galleries, cafes, and events.",
+        "tags": ["cultural", "architecture", "plaza", "art", "events"],
+        "duration_hours": 1.5,
+        "best_time": ["morning", "afternoon", "evening"],
+        "category": "cultural",
+        "lat": -37.8180,
+        "lon": 144.9691,
+        "price_band": 1,
+        "source": ["wikidata:Q1058221", "wikipedia:Federation_Square"]
+    },
+    {
+        "id": "melbourne_queen_victoria_market",
+        "poi_type": "shopping",
+        "name": "Queen Victoria Market",
+        "city": "Melbourne",
+        "state": "Victoria",
+        "country": "Australia",
+        "description": "Historic market offering fresh produce, gourmet foods, clothing, and souvenirs since 1878.",
+        "tags": ["market", "food", "historic", "shopping", "local"],
+        "duration_hours": 2.0,
+        "best_time": ["morning", "afternoon"],
+        "category": "shopping",
+        "lat": -37.8076,
+        "lon": 144.9568,
+        "price_band": 2,
+        "source": ["wikidata:Q1136362", "wikipedia:Queen_Victoria_Market"]
+    },
+    {
+        "id": "melbourne_great_ocean_road",
+        "poi_type": "viewpoint",
+        "name": "Great Ocean Road",
+        "city": "Melbourne (nearby)",
+        "state": "Victoria",
+        "country": "Australia",
+        "description": "Scenic coastal drive featuring the Twelve Apostles limestone formations and stunning ocean views.",
+        "tags": ["scenic_drive", "coastal", "twelve_apostles", "nature", "photography"],
+        "duration_hours": 10.0,
+        "best_time": ["morning", "afternoon"],
+        "category": "nature",
+        "lat": -38.6650,
+        "lon": 143.1050,
+        "price_band": 3,
+        "source": ["wikidata:Q849705", "wikipedia:Great_Ocean_Road"]
+    }
+]

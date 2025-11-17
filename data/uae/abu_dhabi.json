@@ -1,0 +1,53 @@
+[
+    {
+        "id": "abu_dhabi_sheikh_zayed_mosque",
+        "poi_type": "monument",
+        "name": "Sheikh Zayed Grand Mosque",
+        "city": "Abu Dhabi",
+        "state": "",
+        "country": "United Arab Emirates",
+        "description": "Stunning white marble mosque, one of the world's largest, featuring intricate Islamic architecture.",
+        "tags": ["mosque", "architecture", "islamic", "marble", "grand"],
+        "duration_hours": 2.0,
+        "best_time": ["morning", "afternoon", "evening", "sunset"],
+        "category": "cultural",
+        "lat": 24.4128,
+        "lon": 54.4748,
+        "price_band": 1,
+        "source": ["wikidata:Q429253", "wikipedia:Sheikh_Zayed_Grand_Mosque"]
+    },
+    {
+        "id": "abu_dhabi_louvre",
+        "poi_type": "museum",
+        "name": "Louvre Abu Dhabi",
+        "city": "Abu Dhabi",
+        "state": "",
+        "country": "United Arab Emirates",
+        "description": "Universal art museum with stunning dome architecture, showcasing works from around the world.",
+        "tags": ["museum", "art", "architecture", "culture", "modern"],
+        "duration_hours": 3.0,
+        "best_time": ["morning", "afternoon"],
+        "category": "cultural",
+        "lat": 24.5338,
+        "lon": 54.3984,
+        "price_band": 3,
+        "source": ["wikidata:Q1075811", "wikipedia:Louvre_Abu_Dhabi"]
+    },
+    {
+        "id": "abu_dhabi_corniche",
+        "poi_type": "viewpoint",
+        "name": "Corniche Abu Dhabi",
+        "city": "Abu Dhabi",
+        "state": "",
+        "country": "United Arab Emirates",
+        "description": "8km waterfront promenade with beaches, parks, cycle paths, and stunning skyline views.",
+        "tags": ["waterfront", "promenade", "beach", "walking", "scenic"],
+        "duration_hours": 2.0,
+        "best_time": ["morning", "afternoon", "evening", "sunset"],
+        "category": "viewpoint",
+        "lat": 24.4799,
+        "lon": 54.3138,
+        "price_band": 1,
+        "source": ["wikidata:Q4815294", "wikipedia:Corniche_(Abu_Dhabi)"]
+    }
+]

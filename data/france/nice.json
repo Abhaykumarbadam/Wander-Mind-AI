@@ -1,0 +1,53 @@
+[
+    {
+        "id": "nice_promenade_des_anglais",
+        "poi_type": "viewpoint",
+        "name": "Promenade des Anglais",
+        "city": "Nice",
+        "state": "",
+        "country": "France",
+        "description": "Iconic seafront promenade along the Baie des Anges, perfect for walks and coastal views.",
+        "tags": ["promenade", "coastal", "scenic", "walking", "mediterranean"],
+        "duration_hours": 2.0,
+        "best_time": ["morning", "afternoon", "evening", "sunset"],
+        "category": "viewpoint",
+        "lat": 43.6951,
+        "lon": 7.2659,
+        "price_band": 1,
+        "source": ["wikidata:Q286626", "wikipedia:Promenade_des_Anglais"]
+    },
+    {
+        "id": "nice_castle_hill",
+        "poi_type": "viewpoint",
+        "name": "Castle Hill (Colline du Château)",
+        "city": "Nice",
+        "state": "",
+        "country": "France",
+        "description": "Panoramic viewpoint offering stunning views of Nice, the bay, and surrounding landscape.",
+        "tags": ["viewpoint", "panoramic", "park", "historic", "scenic"],
+        "duration_hours": 1.5,
+        "best_time": ["morning", "afternoon", "sunset"],
+        "category": "viewpoint",
+        "lat": 43.6953,
+        "lon": 7.2815,
+        "price_band": 1,
+        "source": ["wikidata:Q2982324", "wikipedia:Castle_Hill,_Nice"]
+    },
+    {
+        "id": "nice_cours_saleya",
+        "poi_type": "shopping",
+        "name": "Cours Saleya Market",
+        "city": "Nice",
+        "state": "",
+        "country": "France",
+        "description": "Vibrant open-air market featuring fresh flowers, produce, local delicacies, and antiques.",
+        "tags": ["market", "flowers", "food", "local", "traditional"],
+        "duration_hours": 1.5,
+        "best_time": ["morning"],
+        "category": "shopping",
+        "lat": 43.6952,
+        "lon": 7.2756,
+        "price_band": 2,
+        "source": ["wikidata:Q3001613", "wikipedia:Cours_Saleya"]
+    }
+]
