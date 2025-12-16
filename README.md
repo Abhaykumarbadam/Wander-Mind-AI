@@ -10,7 +10,7 @@
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_DB-FF6B6B?style=for-the-badge)](https://www.trychroma.com/)
 [![LangChain](https://img.shields.io/badge/LangChain-0.3.75-121212?style=for-the-badge)](https://www.langchain.com/)
 
-[Features](#-features) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [API Documentation](#-api-documentation) • [Contributing](#-contributing)
+[Features](#-features) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [API Documentation](#-api-documentation) 
 
 </div>
 
@@ -735,55 +735,9 @@ Visit **http://localhost:8000/docs** for complete Swagger UI documentation with:
 | `GEMINI_MODEL` | ⚠️* | Gemini model (e.g., `gemini-2.0-flash`) |
 | `GOOGLE_PROJECT_ID` | ✅ | Firebase project ID |
 | `FIREBASE_SERVICE_ACCOUNT_PATH` | ✅ | Path to Firebase service account JSON |
-| `CHROMA_MODE` | ❌ | `local` or `server` (default: `local`) |
-| `CHROMA_HOST` | ❌ | ChromaDB host (default: `localhost`) |
-| `CHROMA_PORT` | ❌ | ChromaDB port (default: `8001`) |
-| `AVIATIONSTACK_API_KEY` | ❌ | Aviation Stack API for flights (optional) |
 
 \* Either OpenAI or Gemini credentials required
 
-### Docker Deployment
-
-**docker-compose.yml** includes:
-- **ChromaDB** service (vector database)
-- **Backend** service (FastAPI)
-- Automatic health checks
-- Volume persistence for ChromaDB data
-- Network isolation
-
-```bash
-# Production build
-docker-compose -f docker-compose.yml up -d --build
-
-# Check service health
-docker-compose ps
-
-# View backend logs
-docker-compose logs -f backend
-
-# Scale services (if needed)
-docker-compose up -d --scale backend=3
-```
-
-### Production Considerations
-
-1. **Security**:
-   - Use HTTPS (reverse proxy with Nginx/Caddy)
-   - Rotate API keys regularly
-   - Enable CORS only for trusted domains
-   - Implement rate limiting
-
-2. **Performance**:
-   - Use MongoDB Atlas with replica sets
-   - Deploy ChromaDB on separate server for heavy RAG workloads
-   - Enable Redis caching for frequent queries
-   - Use CDN for static assets
-
-3. **Monitoring**:
-   - Add logging middleware (Loguru, Sentry)
-   - Set up health check endpoints (`/health`, `/ready`)
-   - Monitor LLM API usage and costs
-   - Track database query performance
 
 ---
 
@@ -808,97 +762,6 @@ python scripts/query_test.py
 python -c "from utils.geocoding import geocode_location; print(geocode_location('Tokyo'))"
 ```
 
-### Manual API Testing
-
-Use the interactive Swagger UI at http://localhost:8000/docs or test with curl:
-
-```bash
-# Health check
-curl http://localhost:8000/health
-
-# Test chat (requires auth token)
-curl -X POST http://localhost:8000/message \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_FIREBASE_JWT" \
-  -d '{
-    "user_id": "test-user",
-    "session_id": "test-session",
-    "message": "I want to visit Paris"
-  }'
-
-# Generate itinerary
-curl -X POST http://localhost:8000/plan \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_FIREBASE_JWT" \
-  -d '{
-    "user_id": "test-user",
-    "session_id": "test-session"
-  }'
-```
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these guidelines:
-
-### Development Workflow
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Make your changes** with clear commit messages
-4. **Test thoroughly** (backend + frontend)
-5. **Update documentation** if needed
-6. **Submit a pull request**
-
-### Code Style
-
-- **Python**: Follow PEP 8, use type hints
-- **JavaScript**: ES6+, use `const`/`let`, async/await
-- **Comments**: Explain *why*, not *what*
-- **Commit messages**: Use conventional commits (feat:, fix:, docs:, etc.)
-
-### Areas to Contribute
-
-- 🌐 **Add more countries** to the knowledge base (`data/` directory)
-- 🎨 **UI/UX improvements** (dark mode, accessibility)
-- 🔌 **New integrations** (Amadeus API, Skyscanner, etc.)
-- 🧠 **LLM enhancements** (prompt engineering, RAG improvements)
-- 🐛 **Bug fixes** and performance optimizations
-- 📖 **Documentation** improvements
-
----
-
-## 📜 License
-
-This project is licensed under the **MIT License**. See [LICENSE](LICENSE) file for details.
-
----
-
-## 👥 Authors & Acknowledgments
-
-**WanderMind AI Team**
-- Lead Developer: [Your Name]
-- Contributors: [List contributors]
-
-**Special Thanks:**
-- OpenAI for GPT models
-- Google for Gemini models
-- LangChain for LLM orchestration
-- ChromaDB for vector database
-- Firebase for authentication
-- Nominatim for geocoding services
-
----
-
-## 📞 Support & Contact
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/wandermind-ai/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/wandermind-ai/discussions)
-- **Email**: support@wandermind.ai
-- **Documentation**: [Full Docs](./PROJECT_DOCUMENTATION.md)
-
----
 
 ## 🗺️ Roadmap
 
@@ -934,25 +797,6 @@ This project is licensed under the **MIT License**. See [LICENSE](LICENSE) file 
 
 </div>
 
-```json
-{
-    "id": "unique_string_identifier",
-    "poi_type": "cafe | restaurant | viewpoint | shopping | museum | park | monument | other",
-    "name": "Name of the POI",
-    "city": "City where the POI is located",
-    "state": "State or region (if applicable)",
-    "country": "Country where the POI is located",
-    "description": "Concise description (1-2 sentences)",
-    "tags": ["list", "of", "relevant", "tags"],
-    "duration_hours": 2.5,
-    "best_time": ["morning", "afternoon", "evening", "sunset", "night"],
-    "category": "food | viewpoint | shopping | cultural | historical | nature | other",
-    "lat": 12.3456,
-    "lon": 78.9012,
-    "price_band": 1-5,
-    "source": ["wikidata:QID", "wikipedia:Page_name"]
-}
-```
 
 ## 🗺️ Coverage
 
@@ -1032,8 +876,3 @@ Load JSON files programmatically to:
 - **Categories**: 7
 - **Verified Sources**: Wikidata & Wikipedia
 
----
-
-**Last Updated**: November 2025
-**Format**: JSON
-**License**: Data compiled from public sources (Wikidata, Wikipedia)
