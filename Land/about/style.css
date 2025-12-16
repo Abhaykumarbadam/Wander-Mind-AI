@@ -11,6 +11,42 @@ html, body {
   font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
   -webkit-font-smoothing: antialiased;
   background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+  position: relative;
+}
+
+.hero-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60vh;
+  background: 
+    linear-gradient(rgba(0,0,0,0.3), rgba(255,255,255,0.95)),
+    url("../img/job-savelsberg-XBPSJ1EEDYc-unsplash.jpg") 
+      center/cover no-repeat;
+}
+
+/* Hero Background */
+/* .hero-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60vh;
+  background: linear-gradient(rgba(0,0,0,0.3), rgba(255,255,255,0.95)), 
+              url('https://images.unsplash.com/photo-XBPSJ1EEDYc?auto=format&fit=crop&w=1080&q=80') center/cover no-repeat;
+  z-index: 100;
+} */
+
+main {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+#about {
+  background: transparent;
+  padding: 20px;
 }
 
 h2 {
@@ -21,6 +57,7 @@ h2 {
   font-weight: 800;
   letter-spacing: -0.5px;
   color: #0f172a;
+  text-shadow: 0 2px 10px rgba(255,255,255,0.5);
 }
 
 .about-grid {

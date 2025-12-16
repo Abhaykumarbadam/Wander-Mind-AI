@@ -62,6 +62,36 @@ def _coerce_iso_date(val: Optional[str]) -> Optional[str]:
     except Exception:
         return None
 
+def normalize_transport_preference(value: Optional[str]) -> Optional[str]:
+    """Maps a free-text transport preference to one of the canonical SLOT_OPTIONS."""
+    if not value or not isinstance(value, str):
+        return None
+    
+    txt = value.lower()
+    
+    # Check for rental/self-drive keywords
+    if any(k in txt for k in ["suv", "creta", "sedan", "rental car", "self drive", "self-drive", "rent a car"]):
+        return "Rental car/self-drive"
+    
+    # Check for rideshare/taxi keywords
+    if any(k in txt for k in ["uber", "ola", "taxi", "cab", "rideshare", "ride share"]):
+        return "Mostly rideshare/taxis"
+        
+    # Check for public transit keywords
+    if any(k in txt for k in ["metro", "subway", "bus", "train", "public transit", "tram"]):
+        return "Public transit first (metros/buses)"
+        
+    # Check for walking keywords
+    if any(k in txt for k in ["walk", "walking", "on foot"]):
+        return "Walking-heavy / minimal vehicles"
+        
+    # If it's one of the valid options already, return it
+    if value in SLOT_OPTIONS.get("transport_preference", []):
+        return value
+        
+    # If no match, it's an unknown preference
+    return None
+
 def infer_transport_pref(msgs: List[str]) -> Optional[str]:
     if not msgs: return None
     txt = "\n".join(msgs).lower()
@@ -115,7 +145,8 @@ def trip_total_days(profile: Dict) -> Optional[int]:
     sd, ed = profile.get("start_date"), profile.get("end_date")
     if not (sd and ed): return None
     try:
-        d1 = datetime.strptime(sd, "%Y-%m-%d"); d2 = datetime.strptime(ed, "%Y-%m-%d")
+        d1 = dateparser.parse(str(sd))
+        d2 = dateparser.parse(str(ed))
         return (d2 - d1).days + 1
     except Exception:
         return None

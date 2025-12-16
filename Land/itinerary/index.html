@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WanderMind - Premium Itinerary</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Mobile Map Toggle -->
+    <button class="mobile-map-toggle" id="mobileMapToggle">
+        <i class="fas fa-map"></i>
+        <span>Map</span>
+    </button>
+
+    <div class="app-layout">
+
+        <!-- Left Panel: Itinerary Content -->
+        <main class="itinerary-panel">
+
+            <!-- Navigation -->
+            <nav class="nav-header">
+                <button class="nav-btn back-btn" id="backBtn"><i class="fas fa-arrow-left"></i></button>
+                <div class="logo">WanderMind</div>
+                <div class="nav-actions">
+                    <button class="nav-btn primary" id="exportBtn"><i class="fas fa-download"></i> Export PDF</button>
+                </div>
+            </nav>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-container">
+                <div class="loader"></div>
+                <p>Curating your perfect journey...</p>
+            </div>
+
+            <!-- Content Container -->
+            <div id="itineraryContent" class="content-container hidden">
+
+                <!-- Hero Section -->
+                <header class="hero-card">
+                    <div class="hero-bg-gradient"></div>
+                    <div class="hero-content">
+                        <div class="destination-tag" id="heroDestination">
+                            <i class="fas fa-map-pin"></i> <span>Loading...</span>
+                        </div>
+                        <h1 class="trip-title" id="heroTitle">Your Dream Trip</h1>
+                        <div class="hero-stats">
+                            <div class="stat-pill">
+                                <i class="far fa-calendar"></i>
+                                <span id="heroDates">Dates</span>
+                            </div>
+                            <div class="stat-pill">
+                                <i class="fas fa-user-group"></i>
+                                <span id="heroTravelers">Travelers</span>
+                            </div>
+                            <div class="stat-pill">
+                                <i class="fas fa-wallet"></i>
+                                <span id="heroBudget">Budget</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Micro Stats Row 
+                <div class="micro-stats-row">
+                    <div class="micro-card">
+                        <div class="icon-box diet"><i class="fas fa-utensils"></i></div>
+                        <div class="micro-info">
+                            <span class="label">Diet</span>
+                            <span class="value" id="statDiet">-</span>
+                        </div>
+                    </div>
+                    <div class="micro-card">
+                        <div class="icon-box pace"><i class="fas fa-person-walking"></i></div>
+                        <div class="micro-info">
+                            <span class="label">Pace</span>
+                            <span class="value" id="statPace">-</span>
+                        </div>
+                    </div>
+                    <div class="micro-card">
+                        <div class="icon-box transport"><i class="fas fa-bus"></i></div>
+                        <div class="micro-info">
+                            <span class="label">Transport</span>
+                            <span class="value" id="statTransport">-</span>
+                        </div>
+                    </div>
+                    <div class="micro-card">
+                        <div class="icon-box interest"><i class="fas fa-heart"></i></div>
+                        <div class="micro-info">
+                            <span class="label">Interests</span>
+                            <span class="value" id="statInterests">-</span>
+                        </div>
+                    </div>
+                </div>-->
+
+                <!-- Timeline -->
+                <div class="timeline-wrapper" id="timelineContainer">
+                    <!-- Dynamic Days Injected Here -->
+                </div>
+
+                <!-- Booking Section -->
+                <div class="booking-section-wrapper" id="bookingSection">
+                    <div class="booking-header">
+                        <i class="fas fa-suitcase-rolling"></i>
+                        <h2>Transport & Stay</h2>
+                    </div>
+                    <div class="booking-controls">
+                        <div class="control-group">
+                            <label for="originInput">Origin</label>
+                            <input type="text" id="originInput" placeholder="e.g., JFK">
+                        </div>
+                        <div class="control-group">
+                            <label for="destinationInput">Destination</label>
+                            <input type="text" id="destinationInput" placeholder="e.g., LAX" disabled>
+                        </div>
+                        <div class="control-group">
+                            <label for="travelDateInput">Date</label>
+                            <input type="date" id="travelDateInput">
+                        </div>
+                        <div class="control-group">
+                            <label for="passengersInput">Passengers</label>
+                            <input type="number" id="passengersInput" value="1" min="1">
+                        </div>
+                    </div>
+                    <div class="booking-actions">
+                        <button class="booking-btn" id="findAllButton"><i class="fas fa-search"></i> Find Transport & Stay</button>
+                    </div>
+                    <div class="booking-results-container" id="bookingResultsContainer">
+                        <!-- Results will be injected here -->
+                        <div class="results-placeholder">
+                            <p>Your search results will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Right Panel: Map -->
+        <aside class="map-panel" id="mapPanel">
+            <div id="map" class="map-container"></div>
+            <button class="close-map-mobile" id="closeMapMobile"><i class="fas fa-times"></i></button>
+        </aside>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script type="module" src="../firebase-init.js"></script>
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>

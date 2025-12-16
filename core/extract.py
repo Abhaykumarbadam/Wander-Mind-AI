@@ -1,9 +1,38 @@
 # core/extract.py
 import json
 import re
+from datetime import datetime
 from typing import List, Dict
 from core.llm import chat
 from core.prompts import EXTRACT_SCHEMA_HINT, DELTA_SCHEMA_HINT
+
+CURRENCY_CODES = {
+    "USD", "EUR", "GBP", "AUD", "CAD", "SGD", "JPY",
+    "CNY", "KRW", "AED", "MYR", "THB", "CHF", "NZD", "INR"
+}
+
+BUDGET_MULTIPLIERS = {
+    "k": 1_000,
+    "thousand": 1_000,
+    "l": 100_000,
+    "lac": 100_000,
+    "lakh": 100_000,
+    "cr": 10_000_000,
+    "crore": 10_000_000,
+    "m": 1_000_000,
+    "million": 1_000_000,
+    "b": 1_000_000_000,
+    "billion": 1_000_000_000
+}
+
+DATE_FORMATS = [
+    "%Y-%m-%d",
+    "%d-%m-%Y",
+    "%d/%m/%Y",
+    "%Y/%m/%d",
+    "%d %b %Y",
+    "%d %B %Y"
+]
 
 def _extract_json_from_text(text: str) -> dict:
     """Extract JSON from LLM response, handling markdown code blocks and extra text."""
@@ -47,6 +76,81 @@ def _extract_json_from_text(text: str) -> dict:
             pass
     
     return {}
+
+def _normalize_date(value) -> str:
+    if not value or isinstance(value, (int, float)):
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    for fmt in DATE_FORMATS:
+        try:
+            parsed = datetime.strptime(text, fmt)
+            return parsed.strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    if re.match(r"^\d{4}-\d{2}-\d{2}$", text):
+        return text
+    return None
+
+def _normalize_budget(value) -> float:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value).strip().lower()
+    if not text:
+        return None
+    cleaned = text.replace("inr", "").replace("₹", "")
+    match = re.search(
+        r"(\d+(?:[\.,]\d+)?)(?:\s*(k|thousand|l|lac|lakh|cr|crore|m|million|b|billion))?",
+        cleaned
+    )
+    if not match:
+        return None
+    try:
+        base_value = float(match.group(1).replace(",", ""))
+    except ValueError:
+        return None
+    suffix = (match.group(2) or "").lower()
+    multiplier = BUDGET_MULTIPLIERS.get(suffix, 1)
+    return int(round(base_value * multiplier))
+
+def _sanitize_departure_location(value) -> str:
+    if not value:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    upper = text.upper()
+    if upper in CURRENCY_CODES:
+        return None
+    if any(char.isdigit() for char in text):
+        return None
+    return text
+
+def _sanitize_extracted_fields(values: Dict[str, object]) -> Dict[str, object]:
+    sanitized = {}
+    for key, value in values.items():
+        if value in (None, "", []):
+            continue
+        if key in {"start_date", "end_date"}:
+            normalized_date = _normalize_date(value)
+            if normalized_date:
+                sanitized[key] = normalized_date
+            continue
+        if key == "budget_in_inr":
+            normalized_budget = _normalize_budget(value)
+            if normalized_budget is not None:
+                sanitized[key] = normalized_budget
+            continue
+        if key == "departure_location":
+            departure = _sanitize_departure_location(value)
+            if departure:
+                sanitized[key] = departure
+            continue
+        sanitized[key] = value
+    return sanitized
 
 def extract_profile(user_messages: List[str], current_profile: Dict) -> Dict:
     if not user_messages:
@@ -98,7 +202,7 @@ def extract_profile(user_messages: List[str], current_profile: Dict) -> Dict:
         
         # Safety filter: only return fields that are actually missing
         filtered = {k: v for k, v in obj.items() if k in missing and v is not None}
-        return filtered
+        return _sanitize_extracted_fields(filtered)
     except Exception as e:
         print(f"extract_profile error: {e}")
         return {}
@@ -146,7 +250,7 @@ def extract_deltas(user_messages: List[str], current_profile: Dict) -> Dict:
         
         # Safety filter: only return fields that are actually missing
         filtered = {k: v for k, v in obj.items() if k in missing and v is not None}
-        return filtered
+        return _sanitize_extracted_fields(filtered)
     except Exception as e:
         print(f"extract_deltas error: {e}")
         return {}
@@ -215,3 +319,26 @@ def extract_profile_updates(user_messages: List[str], current_profile: Dict) -> 
     except Exception as exc:
         print(f"extract_profile_updates error: {exc}")
         return {"updates": {}, "confirmations": []}
+def structure_itinerary_data(user_profile: Dict, raw_itinerary: str) -> Dict:
+    """
+    Uses the DATA_STRUCTURING_SYSTEM prompt to parse raw itinerary text
+    into a structured JSON object with user_profile, trip, and locations.
+    """
+    from core.prompts import DATA_STRUCTURING_SYSTEM
+    
+    # Inject itinerary into the prompt template
+    system_prompt = DATA_STRUCTURING_SYSTEM.replace("<<RAW_ITINERARY_TEXT_HERE>>", raw_itinerary)
+    
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": "Please parse the itinerary provided in the system prompt into the specified JSON format."}
+    ]
+    
+    try:
+        # Use a larger token limit as the output is complex JSON
+        raw_response = chat(messages, temperature=0.1, max_tokens=4000)
+        structured_data = _extract_json_from_text(raw_response)
+        return structured_data
+    except Exception as e:
+        print(f"Error structuring itinerary data: {e}")
+        return {}

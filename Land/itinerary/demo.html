@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WanderMind Travel Itinerary - Demo</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            color: white;
+        }
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .feature {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: left;
+        }
+        .feature h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        .demo-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+        .screenshot {
+            max-width: 100%;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🌍 Your Travel Journey</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 30px;">
+            Experience your complete travel itinerary with beautiful, professional cards inspired by modern travel apps.
+        </p>
+
+        <div class="features">
+            <div class="feature">
+                <h3>🚀 Upcoming Adventures</h3>
+                <p>Plan and visualize your future trips with stunning destination cards featuring real images from Unsplash.</p>
+            </div>
+            
+            <div class="feature">
+                <h3>✈️ Current Expeditions</h3>
+                <p>Track your ongoing travels with live status updates and detailed information.</p>
+            </div>
+            
+            <div class="feature">
+                <h3>📸 Cherished Memories</h3>
+                <p>Relive your completed journeys and share your amazing experiences.</p>
+            </div>
+            
+            <div class="feature">
+                <h3>📄 PDF Export</h3>
+                <p>Export your complete travel itinerary as a professional PDF document.</p>
+            </div>
+            
+            <div class="feature">
+                <h3>🎨 Beautiful Design</h3>
+                <p>Cards inspired by Airbnb and modern travel apps with automatic image fetching and professional styling.</p>
+            </div>
+            
+            <div class="feature">
+                <h3>📱 Fully Responsive</h3>
+                <p>Perfect experience on desktop, tablet, and mobile devices with smooth animations.</p>
+            </div>
+        </div>
+
+        <div style="margin: 40px 0;">
+            <h2>Key Features Implemented:</h2>
+            <ul style="text-align: left; max-width: 600px; margin: 0 auto; font-size: 1.1rem;">
+                <li>✅ User-specific trip data from Firebase Auth</li>
+                <li>✅ Automatic timeline organization (Upcoming/Current/Past)</li>
+                <li>✅ Beautiful card layout matching your reference image</li>
+                <li>✅ Unsplash integration for destination images</li>
+                <li>✅ Full CRUD operations (Add/Edit/Delete trips)</li>
+                <li>✅ PDF export functionality</li>
+                <li>✅ Geocoding and timezone integration</li>
+                <li>✅ Responsive design matching your app's style</li>
+                <li>✅ Navigation integration with chat interface</li>
+            </ul>
+        </div>
+
+        <div style="margin: 40px 0;">
+            <button class="demo-btn" onclick="window.location.href='/Land/itinerary/index.html'">
+                🎯 View Live Itinerary Page
+            </button>
+            <button class="demo-btn" onclick="window.location.href='/Land/chat/index.html'">
+                💬 Go to Chat Interface
+            </button>
+        </div>
+
+        <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 15px; margin: 30px 0;">
+            <h3>🎨 Design Highlights:</h3>
+            <p style="text-align: left;">
+                • <strong>Professional Cards:</strong> Each trip displays as a beautiful card with destination-specific imagery<br>
+                • <strong>Creative Sections:</strong> "Upcoming Adventures", "Current Expeditions", "Cherished Memories"<br>
+                • <strong>Smart Status:</strong> Automatic status determination based on travel dates<br>
+                • <strong>Rich Details:</strong> Duration, ratings, accommodation, and travel dates<br>
+                • <strong>Interactive:</strong> Click cards for details, hover effects, and smooth animations
+            </p>
+        </div>
+
+        <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 15px; margin: 30px 0;">
+            <h3>🔧 Technical Implementation:</h3>
+            <p style="text-align: left;">
+                • <strong>Backend:</strong> FastAPI with new `/trips/itinerary` endpoint<br>
+                • <strong>Database:</strong> MongoDB with user-specific trip collections<br>
+                • <strong>Images:</strong> Unsplash API integration for dynamic destination photos<br>
+                • <strong>PDF:</strong> jsPDF for client-side PDF generation<br>
+                • <strong>UI:</strong> Vanilla JavaScript with modern CSS Grid and Flexbox<br>
+                • <strong>Auth:</strong> Firebase integration for user-specific data
+            </p>
+        </div>
+
+        <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 40px;">
+            🚀 Ready to test! Navigate to the itinerary page to see your travel journey come to life.
+        </p>
+    </div>
+</body>
+</html>

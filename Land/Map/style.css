@@ -1,0 +1,211 @@
+:root {
+    --primary: #6366f1;
+    --surface: #ffffff;
+    --surface-translucent: rgba(255, 255, 255, 0.9);
+    --text-main: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif;
+}
+
+body {
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+}
+
+.map-container {
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+}
+
+/* Controls */
+.map-controls-top {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    /* Let clicks pass through empty space */
+}
+
+.map-controls-top>* {
+    pointer-events: auto;
+}
+
+.icon-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: none;
+    box-shadow: var(--shadow);
+    color: var(--text-main);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.icon-btn:active {
+    transform: scale(0.95);
+}
+
+.trip-title-badge {
+    background: var(--surface-translucent);
+    backdrop-filter: blur(8px);
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-weight: 600;
+    color: var(--text-main);
+    box-shadow: var(--shadow);
+}
+
+.map-controls-side {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.control-group {
+    background: var(--surface-translucent);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.control-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.control-btn:hover,
+.control-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
+/* Bottom Sheet */
+.bottom-sheet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+    transform: translateY(85%);
+    /* Collapsed state */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 80vh;
+}
+
+.bottom-sheet.expanded {
+    transform: translateY(0);
+}
+
+.sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 12px auto;
+    cursor: grab;
+}
+
+.sheet-content {
+    padding: 0 24px 32px 24px;
+}
+
+.location-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.location-info h2 {
+    font-size: 1.25rem;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.location-info p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.location-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-main);
+    cursor: pointer;
+}
+
+.action-btn.primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+}
+
+/* Custom Pin Styles */
+.custom-pin {
+    background: var(--primary);
+    border: 2px solid white;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.pin-attraction {
+    background: #ef4444;
+}
+
+.pin-food {
+    background: #f59e0b;
+}
+
+.pin-hotel {
+    background: #3b82f6;
+}

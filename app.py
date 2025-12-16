@@ -1,8 +1,9 @@
 # app.py
-import os, json
+import os, json, re
 from datetime import datetime
 from typing import Dict, List, Optional
 import asyncio
+import httpx
 
 # this loads .env manually and injects into os.environ BEFORE anything
 
@@ -16,24 +17,28 @@ load_dotenv()
 
 
 from core.llm import chat, chat_async
-from core.prompts import BASE_SYSTEM_AURA, ASKER_SYSTEM, ITINERARY_SYSTEM_PROMPT
-from core.extract import extract_profile, extract_deltas, extract_profile_updates
+from core.prompts import BASE_SYSTEM_AURA, ASKER_SYSTEM, ITINERARY_SYSTEM_PROMPT, DATA_STRUCTURING_SYSTEM, AURA_V2_SYSTEM
+from core.extract import extract_profile, extract_deltas, extract_profile_updates, structure_itinerary_data
 from db.mongo import (
     get_or_create_profile, save_profile,
     get_or_create_session, append_message,
     get_last_user_messages, get_recent_messages,
     get_session_mode, set_session_mode,
-    save_itinerary, get_itinerary,
+    save_itinerary, get_itinerary, save_locations, get_locations, save_trip,
     reset_trip_fields, get_session_metadata,
     update_session_metadata,
-    PREFERENCE_FIELDS, TRIP_FIELDS
+    save_chat, get_user_chats, get_chat_by_id, update_chat_title,
+    PREFERENCE_FIELDS, TRIP_FIELDS,
+    db, sessions_col
 )
+from utils.location_extractor import get_trip_locations
+from utils.geocoding import geocode_location
 from utils.helpers import (
     missing_slots, merge_soft, apply_user_corrections,
     infer_transport_pref, infer_departure_location,
     parse_destinations, trip_total_days,
     normalize_city_split, slice_split_for_window,
-    build_option_block_for
+    build_option_block_for, normalize_transport_preference, SLOT_OPTIONS
 )
 
 # RAG helper (uses src package RAG helper)
@@ -42,23 +47,103 @@ try:
 except Exception:
     rag_generate_answer = None
 
-load_dotenv(dotenv_path="/Users/himatejagudi/Desktop/WM2/.env")
+# load_dotenv(dotenv_path="/Users/himatejagudi/Desktop/WM2/.env")
 
-# allow multiple origins (comma-separated)
-origins = ["*"]
+# CORS: Allow specific origins for security (use environment variable in production)
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "")
+if allowed_origins_env:
+    origins = [origin.strip() for origin in allowed_origins_env.split(",")]
+else:
+    # Default to local development origins
+    origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ]
+
+from routes import travel
 
 app = FastAPI(title="Aura Travel — LC + OpenAI + Mongo", version="3.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins or ["*"],
+    allow_origins=origins,
     allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
+
+# Include routers
+app.include_router(travel.router)
+
+try:
+    from routes import accommodations, trips, trips_api, booking
+    app.include_router(accommodations.router)
+    app.include_router(trips.router)
+    app.include_router(trips_api.router)
+    app.include_router(booking.router)
+except ImportError as e:
+    print(f"Warning: Could not import new routers: {e}")
 
 # ——— Models
 from pydantic import BaseModel
 class MessageRequest(BaseModel):
     user_message: Optional[str] = ""
     session_id: Optional[str] = None
+
+# ——— Helper Functions
+async def reverse_geocode(lat: float, lon: float) -> Optional[str]:
+    """Convert coordinates to city name using Nominatim API"""
+    try:
+        url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&zoom=10&addressdetails=1"
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers={
+                'Accept-Language': 'en-US',
+                'User-Agent': 'WanderMind/1.0'
+            })
+            
+            if response.status_code != 200:
+                return None
+            
+            data = response.json()
+            
+            if data and data.get('address'):
+                # Prefer city > town > village > state
+                return (data['address'].get('city') or 
+                       data['address'].get('town') or 
+                       data['address'].get('village') or 
+                       data['address'].get('state'))
+    except Exception as e:
+        print(f"Reverse geocoding error: {e}")
+        return None
+    return None
+
+def is_coordinates(value: str) -> bool:
+    """Check if string is coordinates like '17.306, 78.536'"""
+    if not value or not isinstance(value, str):
+        return False
+    # Match patterns like "17.306, 78.536" or "17.306,78.536"
+    coord_pattern = r'^[-+]?\d+\.?\d*\s*,\s*[-+]?\d+\.?\d*$'
+    return bool(re.match(coord_pattern, value.strip()))
+
+async def parse_location_field(value: str) -> str:
+    """Convert coordinates to city name if needed"""
+    if not value or not isinstance(value, str):
+        return value or ''
+    
+    trimmed = value.strip()
+    
+    if is_coordinates(trimmed):
+        try:
+            lat, lon = map(float, trimmed.split(','))
+            print(f"🌍 Detected coordinates: {lat}, {lon} - reverse geocoding...")
+            city = await reverse_geocode(lat, lon)
+            if city:
+                print(f"✅ Reverse geocoded to: {city}")
+                return city
+            print("⚠️ Reverse geocoding failed")
+        except ValueError:
+            pass
+    
+    return trimmed
 
 class PlanRequest(BaseModel):
     session_id: str
@@ -77,46 +162,74 @@ class RagRequest(BaseModel):
 
 # ——— Interview prompt builder
 def build_questions(profile: Dict) -> str:
-    # Filter out display_name from gaps - it's optional UX, not a trip planning requirement
-    gaps = [g for g in missing_slots(profile) if g != "display_name"]
-    priority = ["destination","start_date","end_date","budget_in_inr","travelers","pace",
-                "interests","diet","transport_preference","accommodation_level","departure_location"]
-    gaps_sorted = sorted(gaps, key=lambda x: priority.index(x) if x in priority else 999)
-    prompts = {
-        "departure_location": "Where will you depart from? (City/airport)",
-        "destination": "Where we headed?",
-        "start_date": "When do you want to start?",
-        "end_date": "And when do you wrap?",
-        "budget_in_inr": "What's the total budget (INR), hotel included?",
-        "travelers": "Who's rolling?",
-        "pace": "How fast are we vibing?",
-        "interests": "Pick your top vibes (you can say multiple).",
-        "diet": "Any food rules I should respect?",
-        "transport_preference": "How do you prefer to get around?",
-        "accommodation_level": "Stay vibe?"
-    }
-    qs = []
-    for g in gaps_sorted[:2]:
-        if g in prompts:  # Safety check - only ask about known trip slots
-            qs.append(f"{prompts[g]}\n{build_option_block_for(g)}")
-    return "\n\n".join(qs) if qs else "All set."
+    """
+    Determine the next question to ask based on a strict sequence.
+    Sequence: Name -> Destination -> Dates -> Interests -> Preferences -> Budget -> Food -> Travel Style -> Departure
+    """
+    # 1. Name (display_name) - handled in main loop if missing, but good to have here
+    if not profile.get("display_name"):
+        return "What's your name?"
+
+    # 2. Destination
+    if not profile.get("destination"):
+        return "Where are you planning to go? (City, Country, or Region)"
+
+    # 3. Dates
+    if not profile.get("start_date") or not profile.get("end_date"):
+        return "When are you planning to travel? (Approximate dates or month is fine!)"
+
+    # 4. Interests
+    if not profile.get("interests"):
+        return "What kind of activities do you enjoy? (e.g., History, Nature, Food, Adventure, Relaxing)"
+
+    # 5. Preferences (Pace & Accommodation)
+    missing_prefs = []
+    if not profile.get("pace"): missing_prefs.append("pace (Relaxed, Balanced, Fast)")
+    if not profile.get("accommodation_level"): missing_prefs.append("accommodation style (Hostel, Hotel, Luxury)")
+    
+    if missing_prefs:
+        return f"What's your preferred {' and '.join(missing_prefs)}?"
+
+    # 6. Budget
+    if not profile.get("budget_in_inr"):
+        return "What's your approximate total budget for the trip (in INR)?"
+
+    # 7. Food (Diet)
+    if not profile.get("diet"):
+        return "Do you have any dietary preferences or restrictions? (e.g., Veg, Non-Veg, Vegan)"
+
+    # 8. Travel Style (Transport)
+    if not profile.get("transport_preference"):
+        return "How do you prefer to get around locally? (Public transport, Taxi, Rental car, Walking)"
+
+    # 9. Departure Location
+    if not profile.get("departure_location"):
+        return "Where will you be departing from? (City/Airport)"
+
+    return "All set."
 import firebase_admin
 from firebase_admin import credentials, auth as fb_auth
 
-cred = credentials.Certificate("/Users/himatejagudi/Desktop/WM2/wandermindauth.json")
+firebase_cred_path = os.getenv("FIREBASE_SERVICE_ACCOUNT", "./wandermindauth.json")
+cred = credentials.Certificate(firebase_cred_path)
 firebase_admin.initialize_app(cred)
 
 def get_uid_from_token(authorization_header: Optional[str]) -> str:
     if not authorization_header or not authorization_header.startswith("Bearer "):
         from fastapi import HTTPException, status
+        print(f"DEBUG: Missing or invalid Authorization header: {authorization_header}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing Bearer token")
 
     try:
         token = authorization_header.split("Bearer ")[1].strip()
-        decoded = fb_auth.verify_id_token(token)
+        print(f"DEBUG: Token received (first 20 chars): {token[:20]}...")
+        # Add clock_skew_seconds to handle slight time differences between client and server
+        decoded = fb_auth.verify_id_token(token, clock_skew_seconds=10)
+        print(f"DEBUG: Token verified successfully for UID: {decoded['uid']}")
         return decoded["uid"]
     except Exception as e:
         from fastapi import HTTPException, status
+        print(f"DEBUG: Token verification failed: {str(e)}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid token: {str(e)}")
 
 
@@ -135,6 +248,30 @@ async def message(authorization: Optional[str] = Header(None), body: MessageRequ
     prof_doc = get_or_create_profile(user_id)
     profile = dict(prof_doc.get("profile", {}))
 
+    # --- FIX: Normalize existing transport preference if it's non-standard
+    existing_transport_pref = profile.get("transport_preference")
+    if existing_transport_pref and existing_transport_pref not in SLOT_OPTIONS.get("transport_preference", []):
+        normalized_tp = normalize_transport_preference(existing_transport_pref)
+        if normalized_tp:
+            profile["transport_preference"] = normalized_tp
+            save_profile(user_id, profile)
+            print(f"DEBUG: Corrected non-standard transport preference from '{existing_transport_pref}' to '{normalized_tp}'")
+    # --- END FIX
+
+    # Fallback: Check root level for display_name (legacy/migration)
+    if not profile.get("display_name") and prof_doc.get("display_name"):
+        print(f"DEBUG: Found display_name in root doc: {prof_doc.get('display_name')}. Migrating to profile.")
+        profile["display_name"] = prof_doc.get("display_name")
+        save_profile(user_id, profile)
+    
+    # Convert coordinates to city name in departure_location
+    if profile.get("departure_location") and is_coordinates(profile["departure_location"]):
+        city_name = await parse_location_field(profile["departure_location"])
+        if city_name != profile["departure_location"]:
+            profile["departure_location"] = city_name
+            save_profile(user_id, profile)
+            print(f"DEBUG: Converted departure_location coordinates to city: {city_name}")
+
     is_new_session = body.session_id is None
     session_id = get_or_create_session(body.session_id, user_id)
     session_meta = get_session_metadata(session_id)
@@ -147,6 +284,12 @@ async def message(authorization: Optional[str] = Header(None), body: MessageRequ
             return dict(data)
 
     if is_new_session:
+        print(f"DEBUG: New session {session_id} started. Resetting trip fields for fresh start.")
+        # Reset trip-specific fields so Aura asks questions again
+        for field in TRIP_FIELDS:
+            profile[field] = None
+        save_profile(user_id, profile)
+
         session_meta_updates.update({
             "preferences_prompted": False,
             "preferences_confirmed": False,
@@ -155,252 +298,118 @@ async def message(authorization: Optional[str] = Header(None), body: MessageRequ
     if session_meta.get("profile_snapshot") is None:
         session_meta_updates["profile_snapshot"] = safe_snapshot(profile)
 
-    # 2) store incoming + quick rules
-    if body.user_message:
-        append_message(session_id, "user", body.user_message)
-        profile = apply_user_corrections(profile, body.user_message)
-
-    # 3) deltas first (fill missing or overwrite when explicitly stated)
-    last_user = get_last_user_messages(session_id, k=5)
-    try:
-        deltas = extract_deltas(last_user[-3:], profile)
-        if isinstance(deltas, dict) and deltas:
-            print(f"EXTRACTED DELTAS: {deltas}")
-            for k, v in deltas.items():
-                if v is None:
-                    continue
-                current_value = profile.get(k)
-                if isinstance(v, list):
-                    if current_value != v:
-                        profile[k] = v
-                else:
-                    if current_value != v:
-                        profile[k] = v
-    except Exception as e:
-        print(f"Delta extraction error: {e}")
-
-    # simple heuristics if extractor missed (only for fields that are still missing)
-    if not profile.get("transport_preference"):
-        guess = infer_transport_pref(last_user)
-        if guess:
-            profile["transport_preference"] = guess
-    # Only infer departure_location if it's missing AND we have explicit departure keywords
-    if not profile.get("departure_location"):
-        dep = infer_departure_location(last_user)
-        if dep:
-            profile["departure_location"] = dep
-
-    # 4) fill remaining (soft-merge)
-    try:
-        llm_bits = extract_profile(last_user, profile)
-        print(f"EXTRACTED PROFILE BITS: {llm_bits}")
-        profile = merge_soft(profile, llm_bits)
-    except Exception as e:
-        print(f"Profile extraction error: {e}")
-        llm_bits = {}
-        profile = merge_soft(profile, llm_bits)
-
-    # 5) handle explicit updates/confirmations from user memories
-    try:
-        update_payload = extract_profile_updates(last_user[-3:], profile)
-    except Exception as e:
-        print(f"profile update extraction error: {e}")
-        update_payload = {"updates": {}, "confirmations": []}
-
-    confirmed_pref_fields = set(session_meta.get("confirmed_preferences") or [])
-    preference_updates = []
-
-    for field, value in (update_payload.get("updates") or {}).items():
-        if value is None:
-            continue
-        current_value = profile.get(field)
-        if isinstance(value, list):
-            needs_update = current_value != value
-        else:
-            needs_update = current_value != value
-        if needs_update:
-            profile[field] = value
-            if field in PREFERENCE_FIELDS:
-                preference_updates.append(field)
-
-    confirmations = [
-        field for field in (update_payload.get("confirmations") or [])
-        if field in PREFERENCE_FIELDS
+    # 2) Save user message
+    append_message(session_id, "user", body.user_message, user_id)
+    
+    # NEW LOGIC: Single-shot Aura V2
+    
+    # Build history
+    recent_msgs = get_recent_messages(session_id, k=10)
+    history_text = "\n".join([f"{m.get('role', 'user').upper()}: {m.get('content', '')}" for m in recent_msgs])
+    
+    # Build prompt
+    from datetime import date
+    today_str = date.today().isoformat()
+    
+    msgs = [
+        {"role": "system", "content": AURA_V2_SYSTEM},
+        {"role": "user", "content": f"CURRENT DATE: {today_str}\n\nUSER PROFILE:\n{json.dumps(profile, indent=2)}\n\nCHAT HISTORY:\n{history_text}\n\nLATEST USER MESSAGE:\n{body.user_message}"}
     ]
-
-    if preference_updates:
-        confirmed_pref_fields.update(preference_updates)
-    if confirmations:
-        confirmed_pref_fields.update(confirmations)
-
-    if confirmed_pref_fields:
-        session_meta_updates["confirmed_preferences"] = sorted(set(confirmed_pref_fields))
-        session_meta_updates["preferences_confirmed"] = True
-
-    save_profile(user_id, profile)
-
-    # Track existing preferences for conversational memory
-    preferences_memory = {
-        key: profile.get(key)
-        for key in PREFERENCE_FIELDS
-        if profile.get(key) not in (None, "", [])
-    }
-
-    print("PROFILE DEBUG:", profile)
-
-    def persist_session_meta():
-        if session_meta_updates:
-            update_session_metadata(session_id, session_meta_updates)
-            session_meta.update(session_meta_updates)
-            session_meta_updates.clear()
-
-    # 6) ask next questions OR done
-    gaps = missing_slots(profile)
-    if gaps:
-        known_fields = {k: v for k, v in profile.items() if v not in (None, "", [])}
-        missing_list = gaps
-
-        history = get_recent_messages(session_id, k=10)
-        history_msgs = [{"role": m.get("role", "user"), "content": m.get("content", "")} for m in history]
-
-        context_parts = []
-        if known_fields:
-            context_parts.append(f"Here's what I know about their trip so far: {json.dumps(known_fields, ensure_ascii=False)}")
-        if missing_list:
-            context_parts.append(f"Still need to find out: {', '.join(missing_list)}")
-
-        qblock = build_questions(profile)
-        if qblock and qblock != "All set.":
-            context_parts.append(f"Questions I could ask next: {qblock}")
-
-        context_text = "\n".join(context_parts) if context_parts else "Starting fresh conversation."
-
-        should_prompt_preferences = (
-            bool(preferences_memory)
-            and not session_meta.get("preferences_prompted")
-        )
-
-        def summarize_preferences(pref_dict: Dict[str, object]) -> str:
-            labels = {
-                "pace": "trip pace",
-                "interests": "interests",
-                "diet": "diet preferences",
-                "transport_preference": "getting around",
-                "accommodation_level": "stay style",
-            }
-            phrases = []
-            for key, value in pref_dict.items():
-                label = labels.get(key, key.replace("_", " "))
-                if isinstance(value, list):
-                    val_text = ", ".join(value)
-                else:
-                    val_text = str(value)
-                phrases.append(f"{label}: {val_text}")
-            return "; ".join(phrases)
-
-        preference_summary = summarize_preferences(preferences_memory) if preferences_memory else ""
-
-        messages = [
-            {"role": "system", "content": BASE_SYSTEM_AURA},
-            {"role": "system", "content": ASKER_SYSTEM},
-        ]
-
-        if should_prompt_preferences:
-            messages.append({
-                "role": "system",
-                "content": (
-                    "You remember the traveller's established preferences from their last trip. "
-                    f"These were: {preference_summary}. Mention this memory warmly, confirm whether they "
-                    "want to keep or update these details for the new trip, and encourage them to adjust anything that no longer fits."
-                )
-            })
-            session_meta_updates["preferences_prompted"] = True
-            session_meta_updates["last_prompted_at"] = datetime.utcnow().isoformat() + "Z"
-
-        messages.extend(history_msgs)
-
-        if context_parts:
-            messages.append({
-                "role": "system",
-                "content": f"[Internal context - use this to inform your response naturally: {context_text}]"
-            })
-
-        # Optionally augment the LLM call with retrieval-augmented context from the knowledge base
+    
+    # Call LLM
+    try:
+        response_text = await chat_async(msgs, temperature=0.4)
+        print(f"DEBUG: Raw LLM response (first 200 chars): {response_text[:200]}")
+        
+        # Parse JSON
+        import re
+        
+        response_data = {}
         try:
-            if rag_generate_answer and body.user_message:
+            response_data = json.loads(response_text)
+            print(f"DEBUG: Successfully parsed JSON response")
+        except Exception as e:
+            print(f"DEBUG: Failed to parse as JSON: {e}")
+            match = re.search(r"\{.*\}", response_text, re.DOTALL)
+            if match:
                 try:
-                    rag_res = rag_generate_answer(body.user_message, top_k=6)
-                    rag_summary = rag_res.get("answer") if isinstance(rag_res, dict) else None
-                    rag_sources = rag_res.get("sources") if isinstance(rag_res, dict) else None
-                    if rag_summary:
-                        messages.append({
-                            "role": "system",
-                            "content": f"[Knowledge base summary - use to inform answer: {rag_summary} \nSources: {', '.join(rag_sources or [])}]"
-                        })
-                except Exception as e:
-                    # don't block the main flow on RAG errors
-                    print(f"RAG retrieval error (ask branch): {e}")
-        except Exception:
-            pass
+                    response_data = json.loads(match.group(0))
+                    print(f"DEBUG: Successfully extracted JSON from text")
+                except Exception as e2:
+                    print(f"DEBUG: Failed to extract JSON: {e2}")
+        
+        if not response_data:
+            print(f"DEBUG: No JSON found, treating entire response as plain text")
+            response_data = {"assistant_response": response_text, "action": "none"}
+            
+        # Apply updates
+        updates = response_data.get("profile_updates", {})
+        if updates:
+            clean_updates = {k: v for k, v in updates.items() if v not in (None, "", [])}
+            
+            # --- FIX: Normalize transport preference before saving
+            if "transport_preference" in clean_updates:
+                original_tp = clean_updates["transport_preference"]
+                normalized_tp = normalize_transport_preference(original_tp)
+                if normalized_tp:
+                    clean_updates["transport_preference"] = normalized_tp
+                    print(f"DEBUG: Normalized incoming transport preference from '{original_tp}' to '{normalized_tp}'")
+                else:
+                    # If it can't be normalized, remove it to avoid saving bad data
+                    del clean_updates["transport_preference"]
+                    print(f"DEBUG: Removed un-normalizable transport preference: '{original_tp}'")
+            # --- END FIX
 
-        assistant_text = await chat_async(messages, temperature=0.7, max_tokens=1000, timeout_sec=60)
-        append_message(session_id, "assistant", assistant_text)
-        persist_session_meta()
-        return JSONResponse({"type": "ask", "session_id": session_id, "assistant_message": assistant_text})
-
-    # All slots filled - respond naturally, not with a static message
-    history = get_recent_messages(session_id, k=10)
-    history_msgs = [{"role": m.get("role", "user"), "content": m.get("content", "")} for m in history]
-
-    known_fields = {k: v for k, v in profile.items() if v not in (None, "", [])}
-
-    messages = [
-        {"role": "system", "content": BASE_SYSTEM_AURA},
-        {"role": "system", "content": "The user has provided all trip details. Respond naturally and professionally as a travel consultant. Let them know you're ready to create their detailed itinerary. Be conversational, warm, and helpful - like a personal travel concierge."}
-    ]
-    messages.extend(history_msgs)
-    messages.append({
-        "role": "system",
-        "content": f"[All trip details collected: {json.dumps(known_fields, ensure_ascii=False)}. Respond naturally to confirm you're ready to plan.]"
-    })
-
-    last_user_msg = (body.user_message or "").lower()
-    wants_itinerary = any(phrase in last_user_msg for phrase in [
-        "make the plan", "create itinerary", "generate itinerary", "plan my trip",
-        "show itinerary", "give me itinerary", "yes", "sure", "go ahead", "let's do it"
-    ])
-
-    if wants_itinerary:
-        persist_session_meta()
-        return JSONResponse({
-            "type": "ready_for_plan",
-            "session_id": session_id,
-            "message": "Perfect! Creating your detailed itinerary now...",
-            "profile": known_fields
-        })
-
-    # Optionally add RAG-provided context before the final confirmation/chat reply
-    try:
-        last_user_for_rag = (body.user_message or "") or (history_msgs[-1]['content'] if history_msgs else "")
-        if rag_generate_answer and last_user_for_rag:
+            if clean_updates:
+                profile.update(clean_updates)
+                save_profile(user_id, profile)
+                print(f"DEBUG: Updated profile: {clean_updates}")
+                
+        # Handle action
+        action = response_data.get("action")
+        assistant_reply = response_data.get("assistant_response", "I'm here to help!")
+        
+        # SAFETY CHECK: Ensure assistant_reply is not JSON
+        if isinstance(assistant_reply, str) and assistant_reply.strip().startswith("{"):
+            print(f"WARNING: assistant_reply appears to be JSON, extracting text...")
             try:
-                rag_res = rag_generate_answer(last_user_for_rag, top_k=6)
-                rag_summary = rag_res.get("answer") if isinstance(rag_res, dict) else None
-                rag_sources = rag_res.get("sources") if isinstance(rag_res, dict) else None
-                if rag_summary:
-                    messages.append({
-                        "role": "system",
-                        "content": f"[Knowledge base summary - use to inform answer: {rag_summary} \nSources: {', '.join(rag_sources or [])}]"
-                    })
-            except Exception as e:
-                print(f"RAG retrieval error (confirm branch): {e}")
-    except Exception:
-        pass
+                nested_json = json.loads(assistant_reply)
+                assistant_reply = nested_json.get("assistant_response", assistant_reply)
+            except:
+                print(f"WARNING: Could not parse nested JSON, using as-is")
+        
+        print(f"DEBUG: Final assistant_reply (first 100 chars): {assistant_reply[:100]}")
+        
+        # Save assistant message
+        append_message(session_id, "assistant", assistant_reply, user_id)
+        
+        if is_new_session:
+            save_chat(user_id, session_id)
+            
+        # Ensure the response sent to the frontend is the plain text message
+        final_response_payload = {
+            "type": "ask",
+            "session_id": session_id,
+            "response": assistant_reply,
+            "assistant_message": assistant_reply,
+            "action": action
+        }
 
-    confirm = await chat_async(messages, temperature=0.7, max_tokens=500, timeout_sec=60)
-    append_message(session_id, "assistant", confirm)
-    persist_session_meta()
-    return JSONResponse({"type": "complete", "session_id": session_id, "message": confirm})
+        # If the original response was JSON, include it for debugging if needed,
+        # but ensure the primary response is clean.
+        if isinstance(response_text, str) and response_text.strip().startswith("{"):
+            final_response_payload["_raw_llm_response"] = response_data
+
+        return JSONResponse(final_response_payload)
+        
+    except Exception as e:
+        print(f"Error in message handler: {e}")
+        return JSONResponse({
+            "type": "error",
+            "session_id": session_id,
+            "response": "I'm having trouble connecting. Please try again.",
+            "assistant_message": "I'm having trouble connecting. Please try again."
+        })
 
 # ——— Plan
 @app.post("/plan")
@@ -413,17 +422,24 @@ async def plan(authorization: Optional[str] = Header(None),body: PlanRequest = B
 
     prof_doc = get_or_create_profile(user_id)
     profile = dict(prof_doc.get("profile", {}))
+    print(f"DEBUG: /plan called for user {user_id}")
+    print(f"DEBUG: Profile data: {json.dumps(profile, default=str)}")
 
     must = [s for s in ["destination","start_date","end_date"] if not profile.get(s)]
     if must:
+        print(f"DEBUG: Missing required fields: {must}")
         return JSONResponse(status_code=400, content={"type":"error","message":f"Missing: {', '.join(must)}"})
 
     cities = parse_destinations(profile.get("destination"))
+    print(f"DEBUG: Parsed cities: {cities}")
     if not cities:
+        print("DEBUG: No destination parsed")
         return JSONResponse(status_code=400, content={"type":"error","message":"No destination parsed."})
 
     total_days = trip_total_days(profile)
+    print(f"DEBUG: Total days: {total_days}")
     if not total_days or total_days <= 0:
+        print("DEBUG: Invalid date range")
         return JSONResponse(status_code=400, content={"type":"error","message":"Invalid date range."})
 
     split = normalize_city_split(cities, total_days, body.city_day_split)
@@ -508,17 +524,110 @@ async def plan(authorization: Optional[str] = Header(None),body: PlanRequest = B
             start = end + 1
         itinerary = "\n\n".join(parts)
 
-    # Store itinerary in user profile for persistence
-    save_itinerary(user_id, body.session_id, itinerary, [s["city"] for s in split], profile.get("start_date"), profile.get("end_date"))
+    # Structure the itinerary data
+    print("Structuring itinerary data...")
+    trip_object = structure_itinerary_data(profile, itinerary)
     
-    return JSONResponse({
-        "type":"itinerary",
-        "session_id": body.session_id,
-        "cities":[s["city"] for s in split],
-        "itinerary": itinerary,
-        "start_date": profile.get("start_date"),
-        "end_date": profile.get("end_date")
-    })
+    if trip_object:
+        trip_object["user_id"] = user_id
+        trip_object["session_id"] = body.session_id
+        
+        # Ensure essential fields are present from profile if missing in structured data
+        if not trip_object.get("destination"):
+            trip_object["destination"] = profile.get("destination")
+        if not trip_object.get("start_date"):
+            trip_object["start_date"] = profile.get("start_date")
+        if not trip_object.get("end_date"):
+            trip_object["end_date"] = profile.get("end_date")
+        if not trip_object.get("travelers"):
+            trip_object["travelers"] = profile.get("travelers", 1)
+        if not trip_object.get("budget_in_inr"):
+            trip_object["budget_in_inr"] = profile.get("budget_in_inr")
+        
+        # Geocode locations
+        print("Geocoding locations...")
+
+        # --- Sanitization: ensure we don't store vehicle model specifics (e.g., 'SUV')
+        # If the structured data or the generated text included specific vehicle types,
+        # prefer the user's profile value or the generic label.
+        def sanitize_transport(trip_obj, profile):
+            import re
+            vehicle_terms = re.compile(r"\b(suv|sedan|hatchback|jeep|innova|scorpio|fortuner|4x4|jeep)\b", re.I)
+
+            # Normalize top-level transport_preference
+            tp = trip_obj.get("transport_preference")
+            profile_tp = profile.get("transport_preference")
+            if isinstance(tp, str) and vehicle_terms.search(tp):
+                # prefer profile value if available, otherwise fall back to generic label
+                trip_obj["transport_preference"] = profile_tp or "Rental car/self-drive"
+
+            # Also sanitize any textual fields in days/activities to remove vehicle model mentions
+            for day in trip_obj.get("days", []):
+                for act in day.get("activities", []):
+                    for fld in ("description","title","how_to_get_there","location_name"):
+                        if isinstance(act.get(fld), str) and vehicle_terms.search(act.get(fld)):
+                            act[fld] = vehicle_terms.sub(lambda m: (profile_tp or "rental car"), act[fld])
+
+        sanitize_transport(trip_object, profile)
+        
+        def enrich_locations(loc_list):
+            if not loc_list: return
+            for loc in loc_list:
+                if not loc.get("lat") or not loc.get("lng"):
+                    query = loc.get("geocode_query") or loc.get("name")
+                    if query:
+                        geo = geocode_location(query)
+                        if geo:
+                            loc["lat"] = geo["lat"]
+                            loc["lng"] = geo["lng"]
+                            print(f"Geocoded {query}: {geo['lat']}, {geo['lng']}")
+
+        enrich_locations(trip_object.get("locations", []))
+        
+        # Also try to geocode activities if they have location_name
+        for day in trip_object.get("days", []):
+            for act in day.get("activities", []):
+                if act.get("location_name") and (not act.get("lat") or not act.get("lng")):
+                    query = act.get("geocode_query") or act.get("location_name")
+                    if query:
+                        geo = geocode_location(query)
+                        if geo:
+                            act["lat"] = geo["lat"]
+                            act["lng"] = geo["lng"]
+
+        # Save to TRIPS collection
+        save_trip(trip_object)
+        
+        # Prepare response with trip identifiers
+        response_data = {
+            "type": "itinerary",
+            "session_id": body.session_id,
+            "cities": [s["city"] for s in split],
+            "itinerary": itinerary,
+            "start_date": profile.get("start_date"),
+            "end_date": profile.get("end_date"),
+            "trip_id": trip_object.get("trip_id"),
+            "_id": str(trip_object.get("_id")) if trip_object.get("_id") else None,
+            "destination": trip_object.get("destination") or profile.get("destination"),
+            "travelers": trip_object.get("travelers") or profile.get("travelers", 1),
+            "budget_in_inr": trip_object.get("budget_in_inr") or profile.get("budget_in_inr")
+        }
+        
+    else:
+        print("ERROR: Failed to structure trip object. Falling back to legacy save.")
+        save_itinerary(user_id, body.session_id, itinerary, [s["city"] for s in split], profile.get("start_date"), profile.get("end_date"))
+        
+        response_data = {
+            "type": "itinerary",
+            "session_id": body.session_id,
+            "cities": [s["city"] for s in split],
+            "itinerary": itinerary,
+            "start_date": profile.get("start_date"),
+            "end_date": profile.get("end_date")
+        }
+
+    
+    return JSONResponse(response_data)
 
 @app.get("/health")
 def health():
@@ -594,6 +703,13 @@ def get_user_itinerary(authorization: Optional[str] = Header(None), session_id: 
         "session_id": itinerary_doc.get("session_id")
     })
 
+@app.get("/locations")
+def get_trip_map_locations(authorization: Optional[str] = Header(None), session_id: Optional[str] = None):
+    """Get extracted locations for the map"""
+    user_id = get_uid_from_token(authorization)
+    locations = get_locations(user_id, session_id)
+    return JSONResponse({"locations": locations})
+
 
 @app.post("/new_trip")
 def new_trip(authorization: Optional[str] = Header(None), body: NewTripRequest = Body(default=NewTripRequest())):
@@ -648,4 +764,202 @@ def rag_query(authorization: Optional[str] = Header(None), body: RagRequest = Bo
             res = rag_generate_answer(body.question, top_k=body.top_k)
             return JSONResponse(res)
     except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+# ——— Chat History Endpoints ———
+
+@app.get("/chats")
+def get_chats(authorization: Optional[str] = Header(None)):
+    """Get all chats for the authenticated user"""
+    user_id = get_uid_from_token(authorization)
+    chats = get_user_chats(user_id)
+    return JSONResponse(chats)
+
+
+@app.get("/dashboard/stats")
+def get_dashboard_stats(authorization: Optional[str] = Header(None)):
+    """Get dashboard statistics for the authenticated user"""
+    from datetime import datetime
+    
+    user_id = get_uid_from_token(authorization)
+    
+    # Get all sessions with trip data
+    if sessions_col is None:
+        return JSONResponse({"total_trips": 0, "total_days": 0, "upcoming": 0})
+    
+    sessions = list(sessions_col.find({"user_id": user_id}))
+    
+    total_trips = len(sessions)
+    total_days = 0
+    upcoming = 0
+    today = datetime.now().date()
+    
+    for session in sessions:
+        # Calculate total days from start_date and end_date
+        start_date_str = session.get("start_date")
+        end_date_str = session.get("end_date")
+        
+        if start_date_str and end_date_str:
+            try:
+                # Parse dates (assuming YYYY-MM-DD or DD/MM/YYYY format)
+                if "/" in start_date_str:
+                    start_date = datetime.strptime(start_date_str, "%d/%m/%Y").date()
+                    end_date = datetime.strptime(end_date_str, "%d/%m/%Y").date()
+                else:
+                    start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+                    end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+                
+                # Calculate trip duration
+                days = (end_date - start_date).days + 1  # +1 to include both start and end day
+                total_days += days
+                
+                # Check if upcoming trip
+                if start_date > today:
+                    upcoming += 1
+            except (ValueError, TypeError):
+                # Skip if date parsing fails
+                pass
+    
+    return JSONResponse({
+        "total_trips": total_trips,
+        "total_days": total_days,
+        "upcoming": upcoming
+    })
+
+
+@app.get("/chat/{session_id}")
+def get_chat(session_id: str, authorization: Optional[str] = Header(None)):
+    """Get specific chat by session ID"""
+    user_id = get_uid_from_token(authorization)
+    
+    # Get session messages
+    messages = get_recent_messages(session_id, k=100)
+    
+    return JSONResponse({
+        "session_id": session_id,
+        "messages": messages
+    })
+
+
+@app.delete("/chat/{session_id}")
+def delete_chat(session_id: str, authorization: Optional[str] = Header(None)):
+    """Delete a chat session and all its messages"""
+    try:
+        user_id = get_uid_from_token(authorization)
+        
+        # Get collections from db
+        chats_col = db["chats"] if db is not None else None
+        messages_col = db["messages"] if db is not None else None
+        itineraries_col = db["itineraries"] if db is not None else None
+        
+        # Delete chat from chats collection
+        chat_id = f"{user_id}_{session_id}"
+        print(f"Attempting to delete chat: {chat_id}, session: {session_id}, user: {user_id}")
+        
+        deleted_count = 0
+        
+        if chats_col is not None:
+            result = chats_col.delete_one({"_id": chat_id, "user_id": user_id})
+            deleted_count += result.deleted_count
+            print(f"Deleted {result.deleted_count} from chats_col")
+        
+        # Delete all messages for this session
+        if messages_col is not None:
+            result = messages_col.delete_many({"session_id": session_id, "user_id": user_id})
+            deleted_count += result.deleted_count
+            print(f"Deleted {result.deleted_count} messages")
+        
+        # Delete session data
+        if sessions_col is not None:
+            result = sessions_col.delete_one({"session_id": session_id, "user_id": user_id})
+            deleted_count += result.deleted_count
+            print(f"Deleted {result.deleted_count} sessions")
+        
+        # Delete itinerary if exists
+        if itineraries_col is not None:
+            result = itineraries_col.delete_one({"session_id": session_id, "user_id": user_id})
+            deleted_count += result.deleted_count
+            print(f"Deleted {result.deleted_count} itineraries")
+        
+        print(f"Total items deleted: {deleted_count}")
+        return JSONResponse({"success": True, "message": "Chat deleted successfully", "deleted_count": deleted_count})
+    except Exception as e:
+        print(f"Error deleting chat: {e}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse(status_code=500, content={"success": False, "error": str(e)})
+
+
+class ChatTitleRequest(BaseModel):
+    session_id: str
+    first_message: str
+
+
+@app.post("/chat/title")
+async def generate_chat_title(authorization: Optional[str] = Header(None), body: ChatTitleRequest = Body(...)):
+    """Generate AI title for a chat based on first message"""
+    user_id = get_uid_from_token(authorization)
+    
+    try:
+        # Generate title using AI with improved prompt
+        title_prompt = f"""Based on this travel query: "{body.first_message}"
+
+Generate a short, descriptive chat title (4-6 words max) that captures the destination or trip essence.
+
+Examples:
+- "I want to visit Paris" → "Paris Trip Planning"
+- "Plan a beach vacation in Bali" → "Bali Beach Vacation"
+- "Family trip to Tokyo and Kyoto" → "Tokyo & Kyoto Family Trip"
+- "Adventure travel in Switzerland" → "Switzerland Adventure"
+
+Return ONLY the title, no quotes or extra text."""
+        
+        title_response = await chat_async(
+            [
+                {"role": "system", "content": "You are a travel title generator. Create concise, engaging titles that highlight the destination and trip type."},
+                {"role": "user", "content": title_prompt}
+            ],
+            timeout_sec=10
+        )
+        
+        title = title_response.strip().strip('"').strip("'")
+        if len(title) > 50:
+            title = title[:47] + "..."
+        
+        # Save to database
+        save_chat(user_id, body.session_id, title)
+        update_chat_title(user_id, body.session_id, title)
+        
+        return JSONResponse({"title": title})
+    except Exception as e:
+        print(f"Error generating title: {e}")
+        # Improved fallback - try to extract key words from first message
+        fallback_title = "New Travel Chat"
+        if body.first_message:
+            words = body.first_message.split()[:4]
+            if len(words) > 0:
+                fallback_title = " ".join(words).capitalize()
+                if len(fallback_title) > 30:
+                    fallback_title = fallback_title[:27] + "..."
+        
+        save_chat(user_id, body.session_id, fallback_title)
+        return JSONResponse({"title": fallback_title})
+
+
+class ChatTitleUpdateRequest(BaseModel):
+    session_id: str
+    title: str
+
+
+@app.post("/chat/update-title")
+async def update_chat_title_endpoint(authorization: Optional[str] = Header(None), body: ChatTitleUpdateRequest = Body(...)):
+    """Update chat title (used after plan is generated)"""
+    user_id = get_uid_from_token(authorization)
+    
+    try:
+        update_chat_title(user_id, body.session_id, body.title)
+        return JSONResponse({"status": "success", "title": body.title})
+    except Exception as e:
+        print(f"Error updating chat title: {e}")
         return JSONResponse(status_code=500, content={"error": str(e)})
