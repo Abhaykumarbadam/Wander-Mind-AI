@@ -467,6 +467,19 @@ Visit **http://localhost:8000/docs** for complete Swagger UI documentation with:
 
 ---
 
+## 📈 Evaluation Metrics
+
+The quality of generated itineraries is assessed using both retrieval and generation metrics.
+
+| Category | Metrics |
+|----------|----------|
+| Retrieval | Top-k Retrieval Accuracy, Context Relevance |
+| Generation | Itinerary Completeness, Recommendation Quality |
+| System | Response Latency, API Success Rate |
+| User Experience | Session Completion Rate, Preference Coverage |
+
+These metrics provide insight into the effectiveness of the retrieval pipeline, itinerary generation quality, and overall system performance.
+
 ## 🗄️ Database Schema
 
 ### MongoDB Collections
